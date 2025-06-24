@@ -1,0 +1,62 @@
+##############################
+# Build and Dependency Outputs
+##############################
+bin/
+obj/
+out/
+node_modules/
+
+##############################
+# Visual Studio & VS Code Files
+##############################
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+##############################
+# OS Specific
+##############################
+.DS_Store
+Thumbs.db
+
+##############################
+# Logs, Temp, and Test Artifacts
+##############################
+*.log
+*.tmp
+TestResults/
+CoverageReports/
+
+##############################
+# ASP.NET Core Specific
+##############################
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+##############################
+# Database Files (Optional)
+##############################
+*.db
+*.sqlite
+
+##############################
+# ReSharper & JetBrains Rider
+##############################
+_ReSharper*/
+.idea/
+
+##############################
+# Publish and Packaging
+##############################
+publish/
+*.nupkg
+
+##############################
+# Optional Front-End (Future-Proof)
+##############################
+dist/
+build/
