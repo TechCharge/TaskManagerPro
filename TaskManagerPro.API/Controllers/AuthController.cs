@@ -1,9 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
+using TaskManagerPro.API.Data;
+using TaskManagerPro.API.Dtos;
+using TaskManagerPro.API.Models;
 
 namespace TaskManagerPro.API.Controllers
 {
@@ -11,10 +16,12 @@ namespace TaskManagerPro.API.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
+        private readonly AppDbContext _context;
         private readonly IConfiguration _config;
 
-        public AuthController(IConfiguration config)
+        public AuthController(AppDbContext context, IConfiguration config)
         {
+            _context = context;
             _config = config;
         }
 
@@ -47,6 +54,36 @@ namespace TaskManagerPro.API.Controllers
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
             return Ok(tokenString);
+        }
+
+        [HttpPost("register")]
+        public async Task<ActionResult<User>> Register([FromBody] RegisterRequestDto request)
+        {
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+            {
+                return BadRequest("Username is already taken");
+            }
+
+            CreatePasswordHash(request.Password, out byte[] hash, out byte[] salt);
+
+            var user = new User
+            {
+                Username = request.Username,
+                PasswordHash = hash,
+                PasswordSalt = salt
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(user);
+        }
+
+        private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        {
+            using var hmac = new System.Security.Cryptography.HMACSHA512();
+            passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            passwordSalt = hmac.Key;
         }
     }
 
