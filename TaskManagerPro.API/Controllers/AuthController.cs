@@ -1,11 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using TaskManagerPro.API.Data;
 using TaskManagerPro.API.Dtos;
 using TaskManagerPro.API.Models;
@@ -26,34 +24,23 @@ namespace TaskManagerPro.API.Controllers
         }
 
         [HttpPost("login")]
-        public ActionResult<string> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult<string>> Login([FromBody] LoginRequestDto request)
         {
-            // Temporary: Hardcoded user for demonstration
-            if (request.Username != "testuser" || request.Password != "password")
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+
+            if (user == null)
             {
-                return Unauthorized();
+                return BadRequest("User not found");
             }
 
-            // Token claims
-            var claims = new[]
+            if (!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
             {
-                new Claim(ClaimTypes.Name, request.Username)
-            };
+                return BadRequest("Incorrect password");
+            }
 
-            // Get signing key from config
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "ThisIsA32CharacterSecretKey123!!"));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            string token = CreateToken(user);
 
-            // Generate token
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: creds
-            );
-
-            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return Ok(tokenString);
+            return Ok(token);
         }
 
         [HttpPost("register")]
@@ -84,6 +71,32 @@ namespace TaskManagerPro.API.Controllers
             using var hmac = new System.Security.Cryptography.HMACSHA512();
             passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
             passwordSalt = hmac.Key;
+        }
+
+        private string CreateToken(User user)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, user.Username)
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "ThisIsASuperSecretKeyThatIsLongEnoughForHmacSha512EncryptionAndValidation"));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        {
+            using var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt);
+            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return computedHash.SequenceEqual(storedHash);
         }
     }
 
