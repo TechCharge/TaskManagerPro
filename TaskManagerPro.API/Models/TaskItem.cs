@@ -14,11 +14,8 @@ namespace TaskManagerPro.API.Models
         public string? Description { get; set; }            // Optional details
 
         public DateTime DueDate { get; set; }               // Deadline
-
         public string Status { get; set; } = "Pending";     // Pending, Completed, etc.
-
         public int Priority { get; set; }                   // Priority scale (1–5)
-
         public bool IsComplete => Status?.ToLower() == "completed";
     }
 }

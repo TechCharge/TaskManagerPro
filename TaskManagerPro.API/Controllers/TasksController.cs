@@ -11,12 +11,12 @@ namespace TaskManagerPro.API.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class TaskController : ControllerBase
+    public class TasksController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
 
-        public TaskController(AppDbContext context, IMapper mapper)
+        public TasksController(AppDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -81,27 +81,27 @@ namespace TaskManagerPro.API.Controllers
 
         // POST: api/tasks
         [HttpPost]
-        public async Task<ActionResult<TaskItemDto>> CreateTask(TaskItemDto dto)
+        public async Task<ActionResult<TaskItemDto>> CreateTask(CreateTaskDto dto)
         {
-            TaskItem task = _mapper.Map<TaskItem>(dto);
+            var task = _mapper.Map<TaskItem>(dto);
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
 
-            TaskItemDto result = _mapper.Map<TaskItemDto>(task);
+            var result = _mapper.Map<TaskItemDto>(task);
 
             return CreatedAtAction(nameof(GetTask), new { id = task.Id }, result);
         }
 
         // PUT: api/tasks/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTask(int id, TaskItemDto dto)
+        public async Task<IActionResult> UpdateTask(int id, UpdateTaskDto dto)
         {
             if (id != dto.Id)
             {
                 return BadRequest("ID in URL must match ID in body.");
             }
 
-            TaskItem? task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Tasks.FindAsync(id);
 
             if (task == null)
             {
@@ -132,14 +132,14 @@ namespace TaskManagerPro.API.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> PatchTask(int id, [FromBody] UpdateTaskDto dto)
+        public async Task<IActionResult> PatchTask(int id, [FromBody] PatchTaskDto dto)
         {
             if (dto.Title == null && dto.Description == null && dto.DueDate == null && dto.Status == null && dto.Priority == null)
             {
                 return BadRequest("No fields were provided to update.");
             }
 
-            TaskItem? task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Tasks.FindAsync(id);
 
             if (task == null)
             {

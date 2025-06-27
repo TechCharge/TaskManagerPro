@@ -2,10 +2,8 @@
 
 namespace TaskManagerPro.API.Dtos
 {
-    public class UpdateTaskDto
+    public class CreateTaskDto
     {
-        public int Id { get; set; }
-
         [Required]
         [MaxLength(100)]
         public string Title { get; set; }
@@ -14,7 +12,7 @@ namespace TaskManagerPro.API.Dtos
         public string? Description { get; set; }
 
         public DateTime DueDate { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } = "Pending";
         public int Priority { get; set; }
     }
 }
