@@ -71,7 +71,7 @@ namespace TaskManagerPro.API.Controllers
 
             if (task == null)
             {
-                return NotFound();
+                return NotFound($"Task with ID {id} not found.");
             }
             else
             {
@@ -105,7 +105,7 @@ namespace TaskManagerPro.API.Controllers
 
             if (task == null)
             {
-                return NotFound();
+                return NotFound($"Task with ID {id} not found.");
             }
 
             _mapper.Map(dto, task);
@@ -122,7 +122,7 @@ namespace TaskManagerPro.API.Controllers
 
             if (task == null)
             {
-                return NotFound();
+                return NotFound($"Task with ID {id} not found.");
             }
 
             _context.Tasks.Remove(task);
@@ -143,7 +143,7 @@ namespace TaskManagerPro.API.Controllers
 
             if (task == null)
             {
-                return NotFound();
+                return NotFound($"Task with ID {id} not found.");
             }
 
             _mapper.Map(dto, task);
