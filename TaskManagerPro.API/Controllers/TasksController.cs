@@ -28,29 +28,32 @@ namespace TaskManagerPro.API.Controllers
             [FromQuery] string? status, 
             [FromQuery] bool? isComplete,
             [FromQuery] string? sortBy,
-            [FromQuery] string? order)
+            [FromQuery] string? order,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
             var query = _context.Tasks.AsQueryable();
 
-            // Filter by status if provided
+            // Filter by status
             if (!string.IsNullOrWhiteSpace(status))
             {
-                string statusLower = status.ToLower();
-                query = query.Where(t => t.Status.Equals(statusLower, StringComparison.CurrentCultureIgnoreCase));
+                query = query.Where(t => t.Status != null && t.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
             }
 
-            // Filter by IsComplete if provided
-            if (isComplete != null)
+            // Filter by completion status
+            if (isComplete.HasValue)
             {
-                query = query.Where(t => (t.Status.Equals("completed", StringComparison.CurrentCultureIgnoreCase)) == isComplete.Value);
+                query = query.Where(t => t.IsComplete == isComplete.Value);
             }
 
-            // Optional sorting
+            // Sorting
             if (!string.IsNullOrWhiteSpace(sortBy))
             {
-                bool descending = order?.ToLower() == "desc";
+                bool descending = order != null && order.Equals("desc", StringComparison.OrdinalIgnoreCase);
 
-                query = sortBy.ToLower() switch
+                string normalizedSortBy = sortBy.Trim().ToLowerInvariant();
+
+                query = normalizedSortBy switch
                 {
                     "duedate" => descending ? query.OrderByDescending(t => t.DueDate) : query.OrderBy(t => t.DueDate),
                     "priority" => descending ? query.OrderByDescending(t => t.Priority) : query.OrderBy(t => t.Priority),
@@ -59,8 +62,23 @@ namespace TaskManagerPro.API.Controllers
                 };
             }
 
-            var tasks = await query.ToListAsync();
-            return Ok(_mapper.Map<IEnumerable<TaskItemDto>>(tasks));
+            // Pagination
+            int totalTasks = await query.CountAsync();
+            var tasks = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = _mapper.Map<IEnumerable<TaskItemDto>>(tasks);
+
+            return Ok(new
+            {
+                page,
+                pageSize,
+                totalTasks,
+                totalPages = (int)Math.Ceiling(totalTasks / (double)pageSize),
+                tasks = result
+            });
         }
 
         // GET: api/tasks/5
