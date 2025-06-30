@@ -11,10 +11,12 @@ node_modules/
 ##############################
 .vs/
 .vscode/
+.idea/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
+*.code-workspace
 
 ##############################
 # OS Specific
@@ -27,6 +29,7 @@ Thumbs.db
 ##############################
 *.log
 *.tmp
+*.swp
 TestResults/
 CoverageReports/
 
@@ -34,11 +37,10 @@ CoverageReports/
 # ASP.NET Core Specific
 ##############################
 appsettings.Development.json
-appsettings.Local.json
-secrets.json
+.env
 
 ##############################
-# Database Files (Optional)
+# Database Files
 ##############################
 *.db
 *.sqlite
@@ -50,13 +52,20 @@ _ReSharper*/
 .idea/
 
 ##############################
+# Backups and Sensitive Config
+##############################
+*.bak
+*.old
+*.orig
+
+##############################
 # Publish and Packaging
 ##############################
 publish/
 *.nupkg
 
 ##############################
-# Optional Front-End (Future-Proof)
+# Front-End
 ##############################
 dist/
 build/

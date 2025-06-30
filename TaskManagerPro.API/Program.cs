@@ -7,7 +7,12 @@ using TaskManagerPro.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "ThisIsASuperSecretKeyThatIsLongEnoughForHmacSha512EncryptionAndValidation";
+var jwtKey = builder.Configuration["Jwt:Key"];
+
+if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 64)
+{
+    throw new InvalidOperationException("JWT secret key is missing or insecure. Please check your configuration.");
+}
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -59,7 +64,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
 
 var app = builder.Build();
 

@@ -28,14 +28,9 @@ namespace TaskManagerPro.API.Controllers
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
 
-            if (user == null)
+            if (user == null || !VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
             {
-                return BadRequest("User not found");
-            }
-
-            if (!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
-            {
-                return BadRequest("Incorrect password");
+                return Unauthorized("Incorrect username or password");
             }
 
             string token = CreateToken(user);
@@ -75,13 +70,20 @@ namespace TaskManagerPro.API.Controllers
 
         private string CreateToken(User user)
         {
+            var secretKey = _config["Jwt:Key"];
+
+            if (string.IsNullOrWhiteSpace(secretKey) || secretKey.Length < 64)
+            {
+                throw new InvalidOperationException("JWT secret key is missing or insecure. Please check your configuration.");
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, user.Username)
             };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "ThisIsASuperSecretKeyThatIsLongEnoughForHmacSha512EncryptionAndValidation"));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             var token = new JwtSecurityToken(
                 claims: claims,
@@ -92,17 +94,11 @@ namespace TaskManagerPro.API.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        private static bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
             using var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt);
             var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
             return computedHash.SequenceEqual(storedHash);
         }
-    }
-
-    public class LoginRequest
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
     }
 }

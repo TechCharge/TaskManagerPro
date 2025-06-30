@@ -11,17 +11,8 @@ namespace TaskManagerPro.API.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class TasksController : ControllerBase
+    public class TasksController(AppDbContext context, IMapper mapper) : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IMapper _mapper;
-
-        public TasksController(AppDbContext context, IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-
         // GET: api/tasks
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks(
@@ -32,7 +23,7 @@ namespace TaskManagerPro.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var query = _context.Tasks.AsQueryable();
+            var query = context.Tasks.AsQueryable();
 
             // Filter by status
             if (!string.IsNullOrWhiteSpace(status))
@@ -69,12 +60,12 @@ namespace TaskManagerPro.API.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            var result = _mapper.Map<IEnumerable<TaskItemDto>>(tasks);
+            var result = mapper.Map<IEnumerable<TaskItemDto>>(tasks);
 
             return Ok(new
             {
-                page,
-                pageSize,
+                page = Math.Max(page, 1),
+                pageSize = Math.Clamp(pageSize, 1, 100),
                 totalTasks,
                 totalPages = (int)Math.Ceiling(totalTasks / (double)pageSize),
                 tasks = result
@@ -85,7 +76,7 @@ namespace TaskManagerPro.API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<TaskItem>> GetTask(int id)
         {
-            TaskItem? task = await _context.Tasks.FindAsync(id);
+            TaskItem? task = await context.Tasks.FindAsync(id);
 
             if (task == null)
             {
@@ -93,7 +84,7 @@ namespace TaskManagerPro.API.Controllers
             }
             else
             {
-                return Ok(_mapper.Map<TaskItemDto>(task));
+                return Ok(mapper.Map<TaskItemDto>(task));
             }
         }
 
@@ -101,11 +92,11 @@ namespace TaskManagerPro.API.Controllers
         [HttpPost]
         public async Task<ActionResult<TaskItemDto>> CreateTask(CreateTaskDto dto)
         {
-            var task = _mapper.Map<TaskItem>(dto);
-            _context.Tasks.Add(task);
-            await _context.SaveChangesAsync();
+            var task = mapper.Map<TaskItem>(dto);
+            context.Tasks.Add(task);
+            await context.SaveChangesAsync();
 
-            var result = _mapper.Map<TaskItemDto>(task);
+            var result = mapper.Map<TaskItemDto>(task);
 
             return CreatedAtAction(nameof(GetTask), new { id = task.Id }, result);
         }
@@ -119,15 +110,15 @@ namespace TaskManagerPro.API.Controllers
                 return BadRequest("ID in URL must match ID in body.");
             }
 
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await context.Tasks.FindAsync(id);
 
             if (task == null)
             {
                 return NotFound($"Task with ID {id} not found.");
             }
 
-            _mapper.Map(dto, task);
-            await _context.SaveChangesAsync();
+            mapper.Map(dto, task);
+            await context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -136,15 +127,15 @@ namespace TaskManagerPro.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            TaskItem? task = await _context.Tasks.FindAsync(id);
+            TaskItem? task = await context.Tasks.FindAsync(id);
 
             if (task == null)
             {
                 return NotFound($"Task with ID {id} not found.");
             }
 
-            _context.Tasks.Remove(task);
-            await _context.SaveChangesAsync();
+            context.Tasks.Remove(task);
+            await context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -157,15 +148,15 @@ namespace TaskManagerPro.API.Controllers
                 return BadRequest("No fields were provided to update.");
             }
 
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await context.Tasks.FindAsync(id);
 
             if (task == null)
             {
                 return NotFound($"Task with ID {id} not found.");
             }
 
-            _mapper.Map(dto, task);
-            await _context.SaveChangesAsync();
+            mapper.Map(dto, task);
+            await context.SaveChangesAsync();
 
             return NoContent();
         }
