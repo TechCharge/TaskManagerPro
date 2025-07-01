@@ -17,6 +17,5 @@ namespace TaskManagerPro.API.Models
         public string Status { get; set; } = "Pending";     // Pending, Completed, etc.
         public int Priority { get; set; }                   // Priority scale (1–5)
         public bool IsComplete => Status != null && Status.Equals("completed", StringComparison.OrdinalIgnoreCase);
-
     }
 }

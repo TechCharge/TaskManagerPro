@@ -15,7 +15,7 @@ namespace TaskManagerPro.API.Controllers
     {
         // GET: api/tasks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks(
+        public async Task<ActionResult<IEnumerable<TaskItemDto>>> GetTasks(
             [FromQuery] string? status, 
             [FromQuery] bool? isComplete,
             [FromQuery] string? sortBy,
@@ -28,13 +28,15 @@ namespace TaskManagerPro.API.Controllers
             // Filter by status
             if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(t => t.Status != null && t.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+                string normalizedStatus = status.ToLower();
+
+                query = query.Where(t => t.Status != null && t.Status.ToLower() == normalizedStatus);
             }
 
             // Filter by completion status
             if (isComplete.HasValue)
             {
-                query = query.Where(t => t.IsComplete == isComplete.Value);
+                query = query.Where(t => (t.Status != null && t.Status.ToLower() == "completed") == isComplete.Value);
             }
 
             // Sorting
@@ -46,6 +48,7 @@ namespace TaskManagerPro.API.Controllers
 
                 query = normalizedSortBy switch
                 {
+                    "id" => descending ? query.OrderByDescending(t => t.Id) : query.OrderBy(t => t.Id),
                     "duedate" => descending ? query.OrderByDescending(t => t.DueDate) : query.OrderBy(t => t.DueDate),
                     "priority" => descending ? query.OrderByDescending(t => t.Priority) : query.OrderBy(t => t.Priority),
                     "title" => descending ? query.OrderByDescending(t => t.Title) : query.OrderBy(t => t.Title),
@@ -55,6 +58,7 @@ namespace TaskManagerPro.API.Controllers
 
             // Pagination
             int totalTasks = await query.CountAsync();
+
             var tasks = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -74,7 +78,7 @@ namespace TaskManagerPro.API.Controllers
 
         // GET: api/tasks/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TaskItem>> GetTask(int id)
+        public async Task<ActionResult<TaskItemDto>> GetTask(int id)
         {
             TaskItem? task = await context.Tasks.FindAsync(id);
 
