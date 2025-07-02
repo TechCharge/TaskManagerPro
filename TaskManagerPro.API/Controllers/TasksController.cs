@@ -159,7 +159,13 @@ namespace TaskManagerPro.API.Controllers
                 return NotFound($"Task with ID {id} not found.");
             }
 
-            mapper.Map(dto, task);
+            // Manually update only provided fields
+            if (dto.Title != null) task.Title = dto.Title;
+            if (dto.Description != null) task.Description = dto.Description;
+            if (dto.DueDate.HasValue) task.DueDate = dto.DueDate.Value;
+            if (dto.Status != null) task.Status = dto.Status;
+            if (dto.Priority.HasValue) task.Priority = dto.Priority.Value;
+
             await context.SaveChangesAsync();
 
             return NoContent();
