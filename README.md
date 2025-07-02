@@ -31,18 +31,18 @@ A secure, full-stack-ready task management REST API built with **C#**, **ASP.NET
 
 ## 🛠️ Setup & Run
 
-**Requirements:**
-✔️ [.NET 8 SDK](https://dotnet.microsoft.com/download)
+**Requirements:**\
+✔️ [.NET 8 SDK](https://dotnet.microsoft.com/download)\
 ✔️ [PostgreSQL](https://www.postgresql.org/download/)
 
-### 1️. Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/your-username/TaskManagerPro.API.git
 cd TaskManagerPro.API
 ```
 
-### 2️. Set Up Environment Variables
+### 2. Set Up Environment Variables
 
 For local development:
 
@@ -64,7 +64,7 @@ $env:Jwt__Key="YourSuperLongSecureJwtKeyAtLeast64Characters"
 export Jwt__Key=YourSuperLongSecureJwtKeyAtLeast64Characters
 ```
 
-### 3️. Configure Database
+### 3. Configure Database
 
 Update `appsettings.Development.json` with your local database credentials:
 
@@ -108,6 +108,6 @@ Swagger UI available at: [https://localhost](https://localhost\:PORT/swagger)[:P
 
 ## 📫 Contact
 
-*Developed by Nicholas Roehl*
+*Developed by Nicholas Roehl*\
 *Open to feedback, collaboration, and contributions.*
 
